@@ -3,6 +3,7 @@ import {
   clock, coolRackUse, doughRackUse, lotSlack, proofSlack, recipeOf, type IngredientId, type Lot, type SimState,
 } from "@/lib/engine";
 import { sprite } from "@/lib/sprites";
+import { Tappable } from "./Tappable";
 
 /** FLIP animation: lot cards glide from one pipeline column to the next. */
 function useFlip(ref: React.RefObject<HTMLDivElement | null>) {
@@ -37,6 +38,23 @@ const COLS: { id: string; title: string; match: (l: Lot) => boolean }[] = [
 ];
 
 const MAX_CARDS = 8;
+
+const QUIRKS: Record<string, string[]> = {
+  momo: ["Head baker, reporting!", "I can do it all!"],
+  kuma: ["Dough is my favourite.", "Kneading is good for the soul."],
+  mochi: ["Frosting, anyone?", "Purr-fectly shaped."],
+  piyo: ["Piyo piyo!", "I'm learning so much!"],
+  shiro: ["Up since five...", "Brrr, nice and cool in here."],
+};
+
+/** What a baker says when tapped, depending on what they're doing. */
+function bakerLines(id: string, state: string, task: string): string[] {
+  const quirks = QUIRKS[id] ?? [];
+  if (state === "out") return ["Achoo...", "Feeling a bit sick.", "Back soon!"];
+  if (state === "off") return ["Not on shift right now!", "Zzz...", "See you later!"];
+  if (state === "busy") return [`Busy! I'm ${task}.`, "Almost done!", "Smells good, right?", ...quirks];
+  return ["Anything for me to do?", "Ready when you are!", "*stretches*", ...quirks];
+}
 
 function slackTone(slack: number) {
   return slack < 0 ? "late" : slack < 30 ? "tight" : "ok";
@@ -174,7 +192,7 @@ export function Floor({ s, disrupt }: {
               const verb = l ? { mix: "Mixing", shape: "Shaping", finish: recipeOf(s, l.product).finishSkill === "decorate" ? "Decorating" : "Packing" }[l.stage as "mix"] : "";
               return (
                 <div key={w.id} className={`baker ${st}`}>
-                  <img src={sprite(w.sprite)} alt="" className={st === "busy" ? "bob" : ""} />
+                  <Tappable src={sprite(w.sprite)} name={w.name} imgClass={st === "busy" ? "bob" : ""} lines={() => bakerLines(w.id, st, l ? `${verb.toLowerCase()} ${recipeOf(s, l.product).name.toLowerCase()}` : "")} />
                   <div className="baker-body">
                     <div className="baker-name">{w.name} <small>{w.role}{w.speed !== 1 ? `, ${w.speed}× speed` : ""}</small></div>
                     <div className="baker-task">

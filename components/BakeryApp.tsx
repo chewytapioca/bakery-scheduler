@@ -9,6 +9,8 @@ import { Floor } from "./Floor";
 import { Schedule } from "./Schedule";
 import { Metrics } from "./Metrics";
 import { Kpis } from "./Kpis";
+import { OrderToasts } from "./OrderToasts";
+import { Tappable } from "./Tappable";
 
 const SPEEDS = [1, 5, 15, 40]; // simulated minutes per real second
 type Tab = "floor" | "schedule" | "metrics";
@@ -88,7 +90,7 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
   return (
     <div className="app">
       <header className="sign">
-        <img className="sign-char" src={sprite("bunny")} alt="" />
+        <Tappable className="sign-char" src={sprite("bunny")} name="Momo" lines={() => ["Welcome to Bunbun Bakery!", "Fresh bread soon!", "Hehe, that tickles!"]} />
         <div className="sign-center">
           <div className="sign-goods" aria-hidden="true">
             {["croissant", "cupcake", "melon", "cake", "donut", "baguette"].map((n) => <img key={n} src={sprite(n)} alt="" />)}
@@ -96,7 +98,7 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
           <h1>Bunbun Bakery</h1>
           <p>Production schedule</p>
         </div>
-        <img className="sign-char flip" src={sprite("bear")} alt="" />
+        <Tappable className="sign-char" imgClass="flip" src={sprite("bear")} name="Kuma" lines={() => ["The ovens are warm!", "Want a croissant?", "Kuma at your service."]} />
       </header>
 
       <div className="toolbar">
@@ -143,6 +145,8 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
           <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => setTab(id)}>{l}</button>
         ))}
       </nav>
+
+      <OrderToasts s={s} />
 
       {tab === "floor" && <Floor s={s} disrupt={disrupt} />}
       {tab === "schedule" && <Schedule s={s} fc={fc} />}

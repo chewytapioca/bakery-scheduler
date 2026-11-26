@@ -17,7 +17,19 @@ export function mulberry32(seed: number) {
   };
 }
 
-const CAFES = ["Clover Café", "Hoppy Hotel", "Maple School", "Puddle Tea House", "Sunny Deli", "Moon Library Café"];
+/** Wholesale customers. `logo` is a sprite name (public/sprites/<logo>.webp), `color` is the logo's ink colour. */
+export const CAFES = [
+  { name: "Clover Café", logo: "clover-cafe", color: "#7f9a3e" },
+  { name: "Hoppy Hotel", logo: "hoppy-hotel", color: "#9c8a83" },
+  { name: "Maple School", logo: "maple-school", color: "#c9502a" },
+  { name: "Puddle Tea House", logo: "puddle-tea", color: "#6f92b3" },
+  { name: "Sunny Deli", logo: "sunny-deli", color: "#d9782c" },
+  { name: "Moon Library Café", logo: "moon-library", color: "#7f6d47" },
+] as const;
+export type Cafe = (typeof CAFES)[number];
+
+/** Find the café behind an order's customer name (works for orders loaded from the database too). */
+export const cafeFor = (customer: string): Cafe | undefined => CAFES.find((c) => c.name === customer);
 const PEOPLE = ["Mrs. Hazel", "Little Pip", "Mr. Otter", "Nana Fern", "Juniper", "Biscuit", "Captain Toast", "Miso", "Dr. Waffles", "Pebble", "Lulu", "Clementine"];
 
 const QTY: Record<ProductId, [number, number, number]> = {
@@ -43,7 +55,7 @@ export function makeScenario(seed = 7): Scenario {
   // Wholesale pre-orders: known at open, due during the morning rush.
   for (let i = 0; i < 9; i++) {
     const p = pick(["croissant", "roll", "baguette", "loaf", "melon", "milkbread", "croissant"] as ProductId[]);
-    orders.push({ id: id(), customer: pick(CAFES), product: p, qty: qty(p) + (p === "croissant" ? 12 : 0),
+    orders.push({ id: id(), customer: pick([...CAFES]).name, product: p, qty: qty(p) + (p === "croissant" ? 12 : 0),
       releaseAt: 0, deadline: roundUp(criticalPath(rec(p)) + 30 + rnd() * 90), vip: i < 2 });
   }
   // Custom & walk-in orders through the day.
