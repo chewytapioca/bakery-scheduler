@@ -9,7 +9,7 @@ const MAX_QUEUED = 9;    // at high speed, drop the oldest waiting ones rather t
 const SHOW_MS = 4200;
 
 /** Pops up a café's logo card whenever one of the wholesale cafés places an order. */
-export function OrderToasts({ s }: { s: SimState }) {
+export function OrderToasts({ s, onShow }: { s: SimState; onShow?: () => void }) {
   const seen = useRef(new Set<string>());
   const lastSim = useRef<SimState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -45,14 +45,15 @@ export function OrderToasts({ s }: { s: SimState }) {
 
   return (
     <div className="toasts" aria-live="polite">
-      {toasts.slice(0, MAX_VISIBLE).map((t) => <ToastCard key={t.id} t={t} onDone={() => dismiss(t.id)} />)}
+      {toasts.slice(0, MAX_VISIBLE).map((t) => <ToastCard key={t.id} t={t} onShow={onShow} onDone={() => dismiss(t.id)} />)}
     </div>
   );
 }
 
-function ToastCard({ t, onDone }: { t: Toast; onDone: () => void }) {
+function ToastCard({ t, onShow, onDone }: { t: Toast; onShow?: () => void; onDone: () => void }) {
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {
+    onShow?.(); // a card just appeared on screen: let the bakers react
     const a = setTimeout(() => setLeaving(true), SHOW_MS);
     const b = setTimeout(onDone, SHOW_MS + 350);
     return () => { clearTimeout(a); clearTimeout(b); };

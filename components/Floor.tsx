@@ -96,8 +96,9 @@ function LotCard({ s, l }: { s: SimState; l: Lot }) {
   );
 }
 
-export function Floor({ s, disrupt }: {
+export function Floor({ s, disrupt, cues = {} }: {
   s: SimState;
+  cues?: Record<string, number>; // per-baker counter: bumps when that baker answers a new order
   disrupt: { breakOven: (id: string) => void; workerOut: (id: string) => void; delay: () => void; spill: () => void; rush: () => void };
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -107,6 +108,7 @@ export function Floor({ s, disrupt }: {
   const [ovenPick, setOvenPick] = useState(s.ovens[0].id);
   const [workerPick, setWorkerPick] = useState(s.workers[1].id);
   const dRack = doughRackUse(s), cRack = coolRackUse(s);
+  // Who answers a new café order: an idle baker if there is one, otherwise anyone on shift.
 
   return (
     <div className="floor">
@@ -192,7 +194,7 @@ export function Floor({ s, disrupt }: {
               const verb = l ? { mix: "Mixing", shape: "Shaping", finish: recipeOf(s, l.product).finishSkill === "decorate" ? "Decorating" : "Packing" }[l.stage as "mix"] : "";
               return (
                 <div key={w.id} className={`baker ${st}`}>
-                  <Tappable src={sprite(w.sprite)} name={w.name} imgClass={st === "busy" ? "bob" : ""} lines={() => bakerLines(w.id, st, l ? `${verb.toLowerCase()} ${recipeOf(s, l.product).name.toLowerCase()}` : "")} />
+                  <Tappable src={sprite(w.sprite)} name={w.name} cue={cues[w.id] ?? 0} imgClass={st === "busy" ? "bob" : ""} lines={() => bakerLines(w.id, st, l ? `${verb.toLowerCase()} ${recipeOf(s, l.product).name.toLowerCase()}` : "")} />
                   <div className="baker-body">
                     <div className="baker-name">{w.name} <small>{w.role}{w.speed !== 1 ? `, ${w.speed}× speed` : ""}</small></div>
                     <div className="baker-task">

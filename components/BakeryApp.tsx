@@ -25,6 +25,24 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(15);
   const [tab, setTab] = useState<Tab>("floor");
+  // Each café pop-up gets its own baker who says "I'm on it!". cues[workerId] bumps when it's their turn.
+  const [cues, setCues] = useState<Record<string, number>>({});
+  const recentResponders = useRef<string[]>([]);
+  const nextCueAt = useRef(0);
+  const answerOrder = () => {
+    const sim = simRef.current;
+    const present = sim.workers.filter((w) => sim.now >= w.shift[0] && sim.now < w.shift[1] && w.outUntil <= sim.now);
+    if (!present.length) return;
+    // idle bakers first; skip whoever answered most recently so they take turns
+    const ordered = [...present.filter((w) => !w.lotId), ...present.filter((w) => w.lotId)];
+    const skip = recentResponders.current.slice(-(present.length - 1));
+    const pick = ordered.find((w) => !skip.includes(w.id)) ?? ordered[0];
+    recentResponders.current = [...recentResponders.current, pick.id].slice(-10);
+    // several pop-ups at once: stagger the bubbles so each one is visible
+    const now = performance.now();
+    nextCueAt.current = Math.max(now, nextCueAt.current + 700);
+    setTimeout(() => setCues((c) => ({ ...c, [pick.id]: (c[pick.id] ?? 0) + 1 })), nextCueAt.current - now);
+  };
   const [version, setVersion] = useState(0); // bump when state changes outside normal ticks
   const carry = useRef(0);
   const s = simRef.current;
@@ -146,9 +164,9 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
         ))}
       </nav>
 
-      <OrderToasts s={s} />
+      <OrderToasts s={s} onShow={answerOrder} />
 
-      {tab === "floor" && <Floor s={s} disrupt={disrupt} />}
+      {tab === "floor" && <Floor s={s} disrupt={disrupt} cues={cues} />}
       {tab === "schedule" && <Schedule s={s} fc={fc} />}
       {tab === "metrics" && <Metrics s={s} summary={summary} scenario={scenario} api={api} />}
     </div>
