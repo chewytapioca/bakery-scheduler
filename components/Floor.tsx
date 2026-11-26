@@ -27,14 +27,14 @@ function useFlip(ref: React.RefObject<HTMLDivElement | null>) {
   });
 }
 
-const COLS: { id: string; title: string; match: (l: Lot) => boolean }[] = [
-  { id: "queue", title: "Queue", match: (l) => l.stage === "mix" && !l.running },
-  { id: "mix", title: "Mixing", match: (l) => l.stage === "mix" && l.running },
-  { id: "rest", title: "Resting", match: (l) => l.stage === "rest" },
-  { id: "shape", title: "Shaping", match: (l) => l.stage === "shape" },
-  { id: "bake", title: "Oven", match: (l) => l.stage === "bake" },
-  { id: "cool", title: "Cooling", match: (l) => l.stage === "cool" },
-  { id: "finish", title: "Finish", match: (l) => l.stage === "finish" },
+const COLS: { id: string; title: string; icon: string; match: (l: Lot) => boolean }[] = [
+  { id: "queue", icon: "kit/checklist", title: "Queue", match: (l) => l.stage === "mix" && !l.running },
+  { id: "mix", icon: "kit/stand-mixer", title: "Mixing", match: (l) => l.stage === "mix" && l.running },
+  { id: "rest", icon: "kit/mixing-bowl", title: "Resting", match: (l) => l.stage === "rest" },
+  { id: "shape", icon: "kit/rolling-pin", title: "Shaping", match: (l) => l.stage === "shape" },
+  { id: "bake", icon: "kit/baking-tray", title: "Oven", match: (l) => l.stage === "bake" },
+  { id: "cool", icon: "kit/bread-shelf", title: "Cooling", match: (l) => l.stage === "cool" },
+  { id: "finish", icon: "kit/bread-basket", title: "Finish", match: (l) => l.stage === "finish" },
 ];
 
 const MAX_CARDS = 8;
@@ -126,7 +126,7 @@ export function Floor({ s, disrupt, cues = {} }: {
             const items = lots.filter(c.match);
             return (
               <div className="col" key={c.id}>
-                <div className="col-h">{c.title}<span className="count">{items.length}</span></div>
+                <div className="col-h"><span className="col-title"><img src={sprite(c.icon)} alt="" />{c.title}</span><span className="count">{items.length}</span></div>
                 <div className="col-body">
                   {items.slice(0, MAX_CARDS).map((l) => <LotCard key={l.id} s={s} l={l} />)}
                   {items.length > MAX_CARDS && <div className="more">+{items.length - MAX_CARDS} more</div>}
@@ -135,7 +135,7 @@ export function Floor({ s, disrupt, cues = {} }: {
             );
           })}
           <div className="col done-col">
-            <div className="col-h">Done<span className="count">{done.length}</span></div>
+            <div className="col-h"><span className="col-title"><img src={sprite("kit/receipt-small")} alt="" />Done</span><span className="count">{done.length}</span></div>
             <div className="col-body done-pile">
               {done.slice(-24).map((l) => <img key={l.id} data-flip={l.id} src={sprite(recipeOf(s, l.product).sprite)} alt="" title={`${l.units} ${recipeOf(s, l.product).name}`} />)}
             </div>

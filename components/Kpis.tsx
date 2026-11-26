@@ -1,7 +1,9 @@
 import { clock, type SimState, type Summary } from "@/lib/engine";
+import { ACHIEVEMENTS } from "@/lib/achievements";
+import { sprite } from "@/lib/sprites";
 
 /** Today's numbers, laid out like a bakery notebook card: ruled rows, a memo line at the bottom. */
-export function Kpis({ summary: m, s, memo }: { summary: Summary; s: SimState; memo: string }) {
+export function Kpis({ summary: m, s, memo, unlocked = [] }: { summary: Summary; s: SimState; memo: string; unlocked?: string[] }) {
   const open = Object.values(s.orders).filter((o) => o.completedAt == null && o.status !== "cancelled").length;
   const rows: { k: string; v: string; sub: string; tone?: "warn" | "bad" }[] = [
     { k: "On time", v: `${m.ordersOnTime} of ${m.orders}`, sub: `${open} still open` },
@@ -28,6 +30,18 @@ export function Kpis({ summary: m, s, memo }: { summary: Summary; s: SimState; m
           </div>
         ))}
       </dl>
+      <div className="badges">
+        <span>Badges {unlocked.length}/{ACHIEVEMENTS.length}</span>
+        <div className="badge-row">
+          {ACHIEVEMENTS.map((a) => {
+            const got = unlocked.includes(a.id);
+            return (
+              <img key={a.id} src={sprite(a.badge)} className={got ? "got" : "locked"}
+                alt={`${a.name}${got ? "" : " (locked)"}`} title={`${a.name}: ${a.desc}${got ? "" : " (locked)"}`} />
+            );
+          })}
+        </div>
+      </div>
       <div className="memo">
         <span>Memo</span>
         <p>{memo}</p>

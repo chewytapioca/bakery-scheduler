@@ -100,6 +100,14 @@ h1, h2, h3 { margin: 0; font-family: var(--head); font-weight: 400; }
 .ledger b.warn { color: #9a5f10; }
 .ledger b.bad { color: var(--berry); }
 .ledger small { font-size: 12px; color: var(--soft-ink); }
+.badges { display: flex; align-items: center; gap: 10px; padding: 8px 0 6px; border-bottom: 1.5px dashed var(--rule); }
+.badges > span { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--soft-ink); font-weight: 700; white-space: nowrap; }
+.badge-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.badge-row img { width: 26px; height: 30px; object-fit: contain; transition: transform .2s, filter .3s, opacity .3s; }
+.badge-row img.locked { filter: grayscale(1); opacity: .3; }
+.badge-row img.got { animation: badge-in .6s cubic-bezier(.2, 1.4, .4, 1); }
+.badge-row img:hover { transform: translateY(-2px) scale(1.15); }
+@keyframes badge-in { from { transform: scale(.2) rotate(-30deg); } to { transform: none; } }
 .memo { padding-top: 10px; }
 .memo span { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--soft-ink); font-weight: 700; }
 .memo p { margin: 2px 0 0; font-size: 14px; line-height: 1.5; }
@@ -132,7 +140,9 @@ h1, h2, h3 { margin: 0; font-family: var(--head); font-weight: 400; }
 .pipeline { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) 110px; position: relative; }
 .col { padding: 0 6px; min-height: 250px; display: flex; flex-direction: column; }
 .col + .col { border-left: 1.5px dashed var(--rule); }
-.col-h { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; padding: 0 2px 8px; color: var(--ink); white-space: nowrap; }
+.col-title { display: flex; align-items: center; gap: 5px; }
+.col-title img { height: 22px; width: auto; max-width: 26px; object-fit: contain; }
+.col-h { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; padding: 0 2px 8px; color: var(--ink); white-space: nowrap; }
 .count { color: var(--soft-ink); font-variant-numeric: tabular-nums; }
 .col-body { display: flex; flex-direction: column; gap: 6px; }
 .more { font-size: 12px; color: var(--soft-ink); text-align: center; padding: 4px 0; }
@@ -306,10 +316,17 @@ table.mini { border-collapse: collapse; font-size: 13px; width: 100%; }
 @keyframes toast-out { to { opacity: 0; transform: translateX(30px); } }
 .toast-logo { width: 56px; height: 56px; border-radius: 8px; flex: none; animation: logo-pop .7s .1s cubic-bezier(.2, 1.4, .4, 1) both; }
 @keyframes logo-pop { from { transform: scale(.4) rotate(-12deg); } to { transform: none; } }
-.toast-kicker { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
+.toast-kicker { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
 .toast-name { font-family: var(--head); font-size: 14px; color: var(--accent); line-height: 1.2; }
 .toast-text { font-size: 12px; color: var(--ink); margin-top: 1px; }
 .toast-x { position: absolute; top: 3px; right: 5px; border: 0; background: none; font-size: 18px; line-height: 1; color: var(--soft-ink); cursor: pointer; padding: 4px; }
+.toast-icon { height: 13px; width: auto; }
+.toast.order .toast-icon { transform-origin: 50% 10%; animation: ring 1s .3s ease-in-out 2; }
+@keyframes ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(18deg); } 30% { transform: rotate(-16deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } 75% { transform: rotate(2deg); } }
+.toast.ready .toast-kicker::after { content: "✓"; font-size: 11px; }
+.toast.badge { background: linear-gradient(135deg, #fff8e6, #fdeef1); border-width: 2px; }
+.toast.badge .toast-logo { object-fit: contain; padding: 4px; background: none; animation: logo-pop .8s .1s cubic-bezier(.2, 1.6, .4, 1) both, shine 1.6s .9s ease-in-out; }
+@keyframes shine { 50% { filter: brightness(1.25) drop-shadow(0 0 6px #ffd27a); } }
 .orders td.cust { display: flex; align-items: center; gap: 6px; }
 .orders td.cust img { width: 22px; height: 22px; border-radius: 5px; }
 

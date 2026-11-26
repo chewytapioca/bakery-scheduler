@@ -10,6 +10,7 @@ import { Schedule } from "./Schedule";
 import { Metrics } from "./Metrics";
 import { Kpis } from "./Kpis";
 import { OrderToasts } from "./OrderToasts";
+import { ACHIEVEMENTS } from "@/lib/achievements";
 import { Tappable } from "./Tappable";
 
 const SPEEDS = [1, 5, 15, 40]; // simulated minutes per real second
@@ -25,6 +26,16 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(15);
   const [tab, setTab] = useState<Tab>("floor");
+  // Achievements earned today (cleared when the day is reset).
+  const [unlocked, setUnlocked] = useState<string[]>([]);
+  const achSim = useRef<SimState | null>(null);
+  useEffect(() => {
+    const sim = simRef.current;
+    if (achSim.current !== sim) { achSim.current = sim; setUnlocked([]); return; }
+    const fresh = ACHIEVEMENTS.filter((a) => !unlocked.includes(a.id) && a.earned(sim)).map((a) => a.id);
+    if (fresh.length) setUnlocked((u) => [...u, ...fresh]);
+  });
+
   // Each café pop-up gets its own baker who says "I'm on it!". cues[workerId] bumps when it's their turn.
   const [cues, setCues] = useState<Record<string, number>>({});
   const recentResponders = useRef<string[]>([]);
@@ -155,7 +166,7 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
         <div className="scene">
           <img src={sprite("scene")} alt="The bakery floor" />
         </div>
-        <Kpis summary={summary} s={s} memo={POLICIES.find((p) => p.id === policy)!.blurb} />
+        <Kpis summary={summary} s={s} memo={POLICIES.find((p) => p.id === policy)!.blurb} unlocked={unlocked} />
       </section>
 
       <nav className="tabs" role="tablist">
@@ -164,7 +175,7 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
         ))}
       </nav>
 
-      <OrderToasts s={s} onShow={answerOrder} />
+      <OrderToasts s={s} unlocked={unlocked} onShow={answerOrder} />
 
       {tab === "floor" && <Floor s={s} disrupt={disrupt} cues={cues} />}
       {tab === "schedule" && <Schedule s={s} fc={fc} />}
