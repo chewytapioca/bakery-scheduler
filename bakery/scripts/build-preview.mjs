@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 mkdirSync("preview/dist", { recursive: true });
 await build({
   entryPoints: ["preview/entry.tsx"], bundle: true, minify: true, format: "iife", outdir: "preview/dist",
-  loader: { ".webp": "dataurl" }, jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' },
+  loader: { ".webp": "dataurl", ".woff2": "dataurl", ".woff": "dataurl" }, jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' },
   tsconfig: "tsconfig.json", logLevel: "warning",
 });
 const js = readFileSync("preview/dist/entry.js", "utf8").replace(/<\/script/gi, "<\\/script");

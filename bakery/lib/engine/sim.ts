@@ -189,7 +189,7 @@ function addOrder(s: SimState, def: import("./types").OrderDef) {
     traysLeft -= trays; unitsLeft -= units;
   }
   s.orders[order.id] = order; s.orderOrder.push(order.id);
-  log(s, def.vip ? "warn" : "info", `📋 ${def.customer} ordered ${def.qty} ${rec.name} (due ${fmt(def.deadline)})${def.vip ? " ⭐" : ""}`);
+  log(s, def.vip ? "warn" : "info", `${def.customer} ordered ${def.qty} ${rec.name} (due ${fmt(def.deadline)})${def.vip ? " · VIP" : ""}`);
 }
 const fmt = (t: number) => { const m = 300 + t; return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
 
@@ -198,7 +198,7 @@ function fireEvent(s: SimState, e: ScenarioEvent) {
     case "order": addOrder(s, e.order); break;
     case "delivery":
       for (const [k, q] of Object.entries(e.items)) s.inventory[k as IngredientId] += q!;
-      log(s, "good", `🚚 ${e.label} arrived (${Object.keys(e.items).join(", ")})`);
+      log(s, "good", `${e.label} arrived (${Object.keys(e.items).join(", ")})`);
       break;
     case "ovenBreak": {
       const o = s.ovens.find((x) => x.id === e.ovenId)!;
@@ -214,7 +214,7 @@ function fireEvent(s: SimState, e: ScenarioEvent) {
       }
       o.lotIds = []; o.status = "broken"; o.targetTemp = null;
       s.intervals.push({ resource: o.id, start: s.now, end: s.now + e.duration, lotId: null, label: "Broken", color: "#c9c2c4", kind: "down" });
-      log(s, "bad", `🔥 ${o.name} broke down for ${e.duration} min${baking && ids.length ? ` – ${ids.length} tray lot(s) ruined` : ""}`);
+      log(s, "bad", `${o.name} broke down for ${e.duration} min${baking && ids.length ? ` – ${ids.length} tray lot(s) ruined` : ""}`);
       break;
     }
     case "workerOut": {
@@ -222,7 +222,7 @@ function fireEvent(s: SimState, e: ScenarioEvent) {
       w.outUntil = s.now + e.duration;
       if (w.lotId) { const l = s.lots[w.lotId]; release(s, l, "ruined"); l.since = s.now; }
       s.intervals.push({ resource: w.id, start: s.now, end: s.now + e.duration, lotId: null, label: "Out", color: "#c9c2c4", kind: "down" });
-      log(s, "bad", `🤒 ${w.name} is out for ${e.duration} min`);
+      log(s, "bad", `${w.name} is out for ${e.duration} min`);
       break;
     }
   }
@@ -234,7 +234,7 @@ export function delayDelivery(s: SimState, minutes: number) {
   if (!d || d.kind !== "delivery") return false;
   d.at += minutes;
   s.pending.sort((a, b) => a.at - b.at);
-  log(s, "bad", `🐢 ${d.label} delayed to ${fmt(d.at)}`);
+  log(s, "bad", `${d.label} delayed to ${fmt(d.at)}`);
   return true;
 }
 
@@ -246,7 +246,7 @@ export function spill(s: SimState, ing: IngredientId, fraction: number) {
   s.c.wasteByIngredient[ing] = (s.c.wasteByIngredient[ing] ?? 0) + q;
   const cost = q * s.scenario.ingredients.find((i) => i.id === ing)!.costPerUnit;
   s.waste.push({ t: s.now, reason: "spoiled", product: "roll", units: 0, cost, lotId: `spill-${ing}` });
-  log(s, "bad", `💥 Lost ${q} ${s.scenario.ingredients.find((i) => i.id === ing)!.unit} of ${ing}`);
+  log(s, "bad", `Lost ${q} ${s.scenario.ingredients.find((i) => i.id === ing)!.unit} of ${ing}`);
 }
 
 export function inject(s: SimState, e: ScenarioEvent) {
@@ -262,7 +262,7 @@ function completeOrderIfDone(s: SimState, o: Order) {
     o.completedAt = s.now;
     o.status = s.now <= o.deadline ? "done" : "late";
     log(s, o.status === "done" ? "good" : "warn",
-      `${o.status === "done" ? "✅" : "⏰"} ${o.customer}'s ${o.qty} ${recipeOf(s, o.product).name} ready${o.status === "late" ? ` (${s.now - o.deadline} min late)` : ""}`);
+      `${o.customer}'s ${o.qty} ${recipeOf(s, o.product).name} ready${o.status === "late" ? ` (${s.now - o.deadline} min late)` : ""}`);
   }
 }
 
@@ -290,7 +290,7 @@ function completions(s: SimState) {
   }
   // ovens
   for (const o of s.ovens) {
-    if (o.status === "broken" && t >= o.brokenUntil) { o.status = "idle"; log(s, "good", `🔧 ${o.name} repaired`); }
+    if (o.status === "broken" && t >= o.brokenUntil) { o.status = "idle"; log(s, "good", `${o.name} repaired`); }
     if (o.status === "maintenance" && !inMaintenance(o, t)) o.status = "idle";
     if (o.status === "idle" && inMaintenance(o, t)) {
       o.status = "maintenance";
@@ -330,7 +330,7 @@ function constraints(s: SimState) {
     if ((l.stage === "shape" && !l.running) || (l.stage === "bake" && !l.ovenId)) {
       const rec = recipeOf(s, l.product);
       if (l.restEnd != null && t > l.restEnd + rec.proofWindow) {
-        log(s, "bad", `🫠 ${label(s, l)} over-proofed waiting for ${l.stage === "bake" ? "an oven" : "a bench"} – binned, remixing`);
+        log(s, "bad", `${label(s, l)} over-proofed waiting for ${l.stage === "bake" ? "an oven" : "a bench"} – binned, remixing`);
         restartLot(s, l, "overproof");
       }
     }
@@ -346,7 +346,7 @@ function constraints(s: SimState) {
         wasteLot(s, l, "cancelled");
         l.stage = "scrapped";
       }
-      log(s, "bad", `❌ ${o.customer} gave up on ${o.qty} ${recipeOf(s, o.product).name}`);
+      log(s, "bad", `${o.customer} gave up on ${o.qty} ${recipeOf(s, o.product).name}`);
     } else if (o.status === "queued" && o.lotIds.some((id) => s.lots[id].consumed)) o.status = "active";
   }
 }
@@ -519,14 +519,14 @@ function dispatchOvens(s: SimState) {
       s.c.changeovers++;
       o.status = "heating"; o.targetTemp = temp; o.heatFrom = o.temp; o.heatStart = t; o.heatDoneAt = t + change;
       s.intervals.push({ resource: o.id, start: t, end: t + change, lotId: null, label: `${o.temp}→${temp}°C`, color: "#f6d7a7", kind: "heat" });
-      log(s, "info", `🌡️ ${o.name} ${o.temp > temp ? "cooling" : "heating"} ${o.temp}→${temp}°C for ${trays}/${o.capacity} trays`);
+      log(s, "info", `${o.name} ${o.temp > temp ? "cooling" : "heating"} ${o.temp}→${temp}°C for ${trays}/${o.capacity} trays`);
     } else {
       o.targetTemp = temp; o.status = "baking"; o.batchStartedAt = t;
       for (const l of lots) {
         l.endsAt = t + recipeOf(s, l.product).bakeMin;
         s.intervals.push({ resource: o.id, start: t, end: l.endsAt, lotId: l.id, label: label(s, l), color: recipeOf(s, l.product).color, kind: "bake" });
       }
-      log(s, "info", `🍞 ${o.name} baking ${trays}/${o.capacity} trays at ${temp}°C`);
+      log(s, "info", `${o.name} baking ${trays}/${o.capacity} trays at ${temp}°C`);
     }
   }
 }
@@ -587,7 +587,7 @@ export function step(s: SimState) {
   const moreOrders = s.pending.some((e) => e.kind === "order");
   if ((!open && !moreOrders && s.now >= s.scenario.dayLength) || s.now >= s.scenario.dayLength + 200) {
     s.finished = true;
-    log(s, "info", "🌙 Bakery closed for the day");
+    log(s, "info", "Bakery closed for the day");
   }
 }
 

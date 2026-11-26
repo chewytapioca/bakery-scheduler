@@ -26,7 +26,7 @@ export function Schedule({ s, fc }: { s: SimState; fc: FC }) {
     return (
       <rect key={`${isFuture ? "f" : "p"}${i}`} x={x(iv.start) + 1} y={y} width={Math.max(1.5, (iv.end - iv.start) * PX - 2)} height={ROW - 10} rx={4}
         fill={fill} opacity={isFuture ? 0.45 : iv.kind === "ruined" ? 0.35 : 1}
-        stroke={iv.kind === "ruined" ? "#c2456a" : isFuture ? "#8c6b5d" : "none"} strokeDasharray={isFuture ? "3 2" : undefined} strokeWidth={1}
+        stroke={iv.kind === "ruined" ? "#c24f63" : isFuture ? "#8a5a33" : "none"} strokeDasharray={isFuture ? "3 2" : undefined} strokeWidth={1}
         onMouseMove={(e) => setHover({ iv, future: isFuture, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY })} onMouseLeave={() => setHover(null)} />
     );
   };
@@ -35,35 +35,35 @@ export function Schedule({ s, fc }: { s: SimState; fc: FC }) {
   const unreleased = s.pending.filter((e) => e.kind === "order").length;
   return (
     <div className="schedule">
-      <div className="card">
-        <div className="card-h">
-          <h2>Schedule</h2>
-          <span className="muted small">Solid = done/committed · faded dashed = forecast if no new orders arrive (re-planned every 5 min) · hatched = down</span>
+      <div className="panel">
+        <div className="h-row">
+          <h2 className="h">Schedule</h2>
+          <span className="note">Solid bars are done or under way. Dashed bars are the forecast if no new orders arrive, re-planned every 5 minutes. Hatched means down.</span>
         </div>
         <div className="gantt-wrap">
           <svg width={W} height={H} className="gantt" role="img" aria-label="Gantt chart of ovens, mixers and bakers">
             <defs>
               <pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-                <rect width="6" height="6" fill="#efe7e4" /><line x1="0" y1="0" x2="0" y2="6" stroke="#c9b8b2" strokeWidth="2" />
+                <rect width="6" height="6" fill="#f3e8d6" /><line x1="0" y1="0" x2="0" y2="6" stroke="#cdb491" strokeWidth="2" />
               </pattern>
             </defs>
             {Array.from({ length: Math.ceil(end / 60) + 1 }).map((_, h) => (
               <g key={h}>
-                <line x1={x(h * 60)} x2={x(h * 60)} y1={TOP - 4} y2={H} stroke="#f0e2dc" />
+                <line x1={x(h * 60)} x2={x(h * 60)} y1={TOP - 4} y2={H} stroke="#efe1c9" />
                 <text x={x(h * 60) + 3} y={14} className="tick">{clock(h * 60)}</text>
               </g>
             ))}
             {rows.map((r, i) => (
               <g key={r.id}>
-                {i % 2 === 0 && <rect x={0} y={TOP + i * ROW} width={W} height={ROW} fill="#fdf5f0" />}
+                {i % 2 === 0 && <rect x={0} y={TOP + i * ROW} width={W} height={ROW} fill="#fcf4e6" />}
                 {r.img && <image href={r.img} x={6} y={TOP + i * ROW + 3} width={22} height={24} />}
                 <text x={r.img ? 32 : 8} y={TOP + i * ROW + 19} className="rowlabel">{r.name}</text>
               </g>
             ))}
             {s.intervals.map((iv, i) => bar(iv, i, false))}
             {future.map((iv, i) => bar(iv, i, true))}
-            <line x1={x(s.now)} x2={x(s.now)} y1={TOP - 6} y2={H} stroke="#c2456a" strokeWidth={2} />
-            <line x1={x(s.scenario.dayLength)} x2={x(s.scenario.dayLength)} y1={TOP - 6} y2={H} stroke="#8c6b5d" strokeDasharray="4 3" />
+            <line x1={x(s.now)} x2={x(s.now)} y1={TOP - 6} y2={H} stroke="#c24f63" strokeWidth={2} />
+            <line x1={x(s.scenario.dayLength)} x2={x(s.scenario.dayLength)} y1={TOP - 6} y2={H} stroke="#8a5a33" strokeDasharray="4 3" />
           </svg>
           {hover && (
             <div className="tip" style={{ left: hover.x + 12, top: hover.y + 10 }}>
@@ -75,10 +75,10 @@ export function Schedule({ s, fc }: { s: SimState; fc: FC }) {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-h">
-          <h2>Orders</h2>
-          <span className="muted small">{orders.length} received · {unreleased} more expected today</span>
+      <div className="panel">
+        <div className="h-row">
+          <h2 className="h">Orders</h2>
+          <span className="note">{orders.length} received, {unreleased} more expected today</span>
         </div>
         <div className="table-wrap">
           <table className="orders">
@@ -94,7 +94,7 @@ export function Schedule({ s, fc }: { s: SimState; fc: FC }) {
                 return (
                   <tr key={o.id} className={status.replace(/ /g, "-")}>
                     <td>{o.id}</td>
-                    <td>{o.customer}{o.vip && " ⭐"}</td>
+                    <td>{o.customer}{o.vip && <em className="vip">VIP</em>}</td>
                     <td className="item"><img src={sprite(rec.sprite)} alt="" />{rec.name}</td>
                     <td>{o.qty}</td>
                     <td>{clock(o.releaseAt)}</td>
@@ -105,7 +105,7 @@ export function Schedule({ s, fc }: { s: SimState; fc: FC }) {
                         {lots.map((l) => <i key={l.id} className={`dot d-${l.stage}`} title={`${l.id}: ${l.stage}`} />)}
                       </div>
                     </td>
-                    <td><span className={`pill ${status.replace(/ /g, "-")}`}>{status}</span></td>
+                    <td><span className={`status ${status.replace(/ /g, "-")}`}>{status}</span></td>
                   </tr>
                 );
               })}

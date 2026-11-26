@@ -26,14 +26,14 @@ function useFlip(ref: React.RefObject<HTMLDivElement | null>) {
   });
 }
 
-const COLS: { id: string; title: string; icon: string; match: (l: Lot) => boolean }[] = [
-  { id: "queue", title: "Queue", icon: "📋", match: (l) => l.stage === "mix" && !l.running },
-  { id: "mix", title: "Mixing", icon: "🥣", match: (l) => l.stage === "mix" && l.running },
-  { id: "rest", title: "Resting", icon: "💤", match: (l) => l.stage === "rest" },
-  { id: "shape", title: "Shaping", icon: "🫓", match: (l) => l.stage === "shape" },
-  { id: "bake", title: "Oven", icon: "🔥", match: (l) => l.stage === "bake" },
-  { id: "cool", title: "Cooling", icon: "🌬️", match: (l) => l.stage === "cool" },
-  { id: "finish", title: "Decorate & pack", icon: "🎀", match: (l) => l.stage === "finish" },
+const COLS: { id: string; title: string; match: (l: Lot) => boolean }[] = [
+  { id: "queue", title: "Queue", match: (l) => l.stage === "mix" && !l.running },
+  { id: "mix", title: "Mixing", match: (l) => l.stage === "mix" && l.running },
+  { id: "rest", title: "Resting", match: (l) => l.stage === "rest" },
+  { id: "shape", title: "Shaping", match: (l) => l.stage === "shape" },
+  { id: "bake", title: "Oven", match: (l) => l.stage === "bake" },
+  { id: "cool", title: "Cooling", match: (l) => l.stage === "cool" },
+  { id: "finish", title: "Finish", match: (l) => l.stage === "finish" },
 ];
 
 const MAX_CARDS = 8;
@@ -57,21 +57,23 @@ function LotCard({ s, l }: { s: SimState; l: Lot }) {
     ? l.ovenId && l.endsAt == null ? "pre-heating" : l.endsAt != null ? `${l.endsAt - s.now} min left` : ""
     : l.blocked ?? "ready";
   return (
-    <div className={`lot ${slackTone(slack)} ${l.blocked?.startsWith("Short") ? "short" : ""}`} data-flip={l.id}
-      title={`${o.customer} · ${o.qty} ${rec.name} · due ${clock(o.deadline)} · slack ${slack} min`}>
+    <div className={`lot ${l.blocked?.startsWith("Short") ? "short" : ""}`} data-flip={l.id}
+      title={`${o.customer}: ${o.qty} ${rec.name}, due ${clock(o.deadline)}, slack ${slack} min`}>
       <img src={sprite(rec.sprite)} alt="" />
       <div className="lot-body">
-        <div className="lot-top"><b>{l.units}</b> {rec.name}{o.vip && " ⭐"}</div>
+        <div className="lot-top">
+          <span className="lot-name">{l.units} {rec.name}</span>
+          <span className={`slack ${slackTone(slack)}`}>{slack >= 0 ? `+${slack}` : slack}m</span>
+        </div>
         <div className="lot-meta">
-          {l.orderId} · {l.trays} tray{l.trays > 1 ? "s" : ""}{l.attempts ? ` · retry ${l.attempts}` : ""}
-          {who && <img className="mini-who" src={sprite(who.sprite)} alt={who.name} title={who.name} />}
+          {l.orderId}{o.vip && <em className="vip">VIP</em>}{l.attempts ? <em className="retry">retry {l.attempts}</em> : null}
+          {who && <span className="lot-who">{who.name}</span>}
         </div>
         {l.running && l.endsAt != null && <div className="bar"><i style={{ width: `${pct}%` }} /></div>}
         <div className={`lot-status ${!l.running && l.blocked ? "blocked" : ""}`}>
-          {ps < 15 && ps !== Infinity ? <span className="proof">⏳ proof {Math.max(0, Math.round(ps))}m · </span> : null}{status}
+          {ps < 15 && ps !== Infinity ? <span className="proof">proofs out in {Math.max(0, Math.round(ps))}m · </span> : null}{status}
         </div>
       </div>
-      <span className={`slack ${slackTone(slack)}`}>{slack >= 0 ? `+${slack}` : slack}</span>
     </div>
   );
 }
@@ -90,13 +92,13 @@ export function Floor({ s, disrupt }: {
 
   return (
     <div className="floor">
-      <div className="card pipeline-card">
-        <div className="card-h">
-          <h2>Production pipeline</h2>
+      <div className="panel pipeline-card">
+        <div className="h-row">
+          <h2 className="h">Production line</h2>
           <div className="racks">
-            <span className={dRack >= s.scenario.doughRackTrays ? "full" : ""}>Dough rack {dRack}/{s.scenario.doughRackTrays} trays</span>
+            <span className={dRack >= s.scenario.doughRackTrays ? "full" : ""}>Dough rack {dRack}/{s.scenario.doughRackTrays}</span>
             <span className={cRack >= s.scenario.coolRackTrays ? "full" : ""}>Cooling rack {cRack}/{s.scenario.coolRackTrays}</span>
-            <span className="legend-slack"><i className="ok" />on track <i className="tight" />&lt;30 min slack <i className="late" />behind</span>
+            <span>Slack: minutes to spare before the deadline</span>
           </div>
         </div>
         <div className="pipeline" ref={ref}>
@@ -104,7 +106,7 @@ export function Floor({ s, disrupt }: {
             const items = lots.filter(c.match);
             return (
               <div className="col" key={c.id}>
-                <div className="col-h">{c.icon} {c.title} <span className="count">{items.length}</span></div>
+                <div className="col-h">{c.title}<span className="count">{items.length}</span></div>
                 <div className="col-body">
                   {items.slice(0, MAX_CARDS).map((l) => <LotCard key={l.id} s={s} l={l} />)}
                   {items.length > MAX_CARDS && <div className="more">+{items.length - MAX_CARDS} more</div>}
@@ -113,7 +115,7 @@ export function Floor({ s, disrupt }: {
             );
           })}
           <div className="col done-col">
-            <div className="col-h">✅ Done <span className="count">{done.length}</span></div>
+            <div className="col-h">Done<span className="count">{done.length}</span></div>
             <div className="col-body done-pile">
               {done.slice(-24).map((l) => <img key={l.id} data-flip={l.id} src={sprite(recipeOf(s, l.product).sprite)} alt="" title={`${l.units} ${recipeOf(s, l.product).name}`} />)}
             </div>
@@ -122,8 +124,8 @@ export function Floor({ s, disrupt }: {
       </div>
 
       <div className="grid3">
-        <div className="card">
-          <div className="card-h"><h2>Ovens</h2></div>
+        <div className="panel">
+          <h2 className="h">Ovens</h2>
           <div className="ovens">
             {s.ovens.map((o) => {
               const inOven = o.lotIds.map((id) => s.lots[id]);
@@ -138,7 +140,7 @@ export function Floor({ s, disrupt }: {
                   <div className="oven-top">
                     <div>
                       <div className="oven-name">{o.name}</div>
-                      <div className={`chip st-${o.status}`}>{label}</div>
+                      <div className={`oven-status st-${o.status}`}>{label}</div>
                     </div>
                     <div className="temp">
                       <b>{o.temp}°</b>
@@ -160,8 +162,8 @@ export function Floor({ s, disrupt }: {
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-h"><h2>Bakers</h2></div>
+        <div className="panel">
+          <h2 className="h">Bakers</h2>
           <div className="bakers">
             {s.workers.map((w) => {
               const l = w.lotId ? s.lots[w.lotId] : null;
@@ -174,12 +176,12 @@ export function Floor({ s, disrupt }: {
                 <div key={w.id} className={`baker ${st}`}>
                   <img src={sprite(w.sprite)} alt="" className={st === "busy" ? "bob" : ""} />
                   <div className="baker-body">
-                    <div className="baker-name">{w.name} <small>{w.role}{w.speed !== 1 ? ` · ${w.speed}× speed` : ""}</small></div>
+                    <div className="baker-name">{w.name} <small>{w.role}{w.speed !== 1 ? `, ${w.speed}× speed` : ""}</small></div>
                     <div className="baker-task">
-                      {out ? `🤒 out until ${clock(w.outUntil)}` : !onShift ? `off shift (${clock(w.shift[0])}–${clock(w.shift[1])})`
+                      {out ? `out until ${clock(w.outUntil)}` : !onShift ? `off shift (${clock(w.shift[0])}–${clock(w.shift[1])})`
                         : l ? `${verb} ${l.units} ${recipeOf(s, l.product).name} · ${w.busyUntil - s.now}m` : "idle"}
                     </div>
-                    <div className="skills">{w.skills.map((k) => <span key={k}>{k}</span>)}<span className="util">{busy + idle ? Math.round((100 * busy) / (busy + idle)) : 0}% busy</span></div>
+                    <div className="skills">{w.skills.join(" · ")}<span className="util">{busy + idle ? Math.round((100 * busy) / (busy + idle)) : 0}% busy</span></div>
                   </div>
                 </div>
               );
@@ -187,32 +189,32 @@ export function Floor({ s, disrupt }: {
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-h"><h2>Pantry</h2></div>
+        <div className="panel">
+          <h2 className="h">Pantry</h2>
           <Pantry s={s} />
         </div>
       </div>
 
       <div className="grid2">
-        <div className="card">
-          <div className="card-h"><h2>Throw a wrench in it</h2></div>
-          <p className="muted">Disruptions hit the live state; the scheduler re-plans on the next minute.</p>
+        <div className="panel">
+          <h2 className="h">Disruptions</h2>
+          <p className="note">These change the live bakery. The scheduler adjusts on the next minute.</p>
           <div className="wrenches">
             <div className="wrench">
               <select value={ovenPick} onChange={(e) => setOvenPick(e.target.value)}>{s.ovens.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
-              <button className="btn" onClick={() => disrupt.breakOven(ovenPick)} disabled={s.finished}>🔥 Break oven (45 min)</button>
+              <button className="btn" onClick={() => disrupt.breakOven(ovenPick)} disabled={s.finished}>Break oven, 45 min</button>
             </div>
             <div className="wrench">
               <select value={workerPick} onChange={(e) => setWorkerPick(e.target.value)}>{s.workers.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
-              <button className="btn" onClick={() => disrupt.workerOut(workerPick)} disabled={s.finished}>🤒 Baker out (90 min)</button>
+              <button className="btn" onClick={() => disrupt.workerOut(workerPick)} disabled={s.finished}>Send baker home, 90 min</button>
             </div>
-            <button className="btn" onClick={disrupt.delay} disabled={s.finished || !s.pending.some((e) => e.kind === "delivery")}>🐢 Delay next delivery 2h</button>
-            <button className="btn" onClick={disrupt.spill} disabled={s.finished}>💥 Spill 40% of flour</button>
-            <button className="btn" onClick={disrupt.rush} disabled={s.finished}>⭐ Rush VIP order</button>
+            <button className="btn" onClick={disrupt.delay} disabled={s.finished || !s.pending.some((e) => e.kind === "delivery")}>Delay next delivery by 2 h</button>
+            <button className="btn" onClick={disrupt.spill} disabled={s.finished}>Spill 40% of the flour</button>
+            <button className="btn" onClick={disrupt.rush} disabled={s.finished}>Add a rush order</button>
           </div>
         </div>
-        <div className="card">
-          <div className="card-h"><h2>Event log</h2></div>
+        <div className="panel">
+          <h2 className="h">Log</h2>
           <ul className="log">
             {[...s.log].reverse().slice(0, 60).map((e, i) => (
               <li key={s.log.length - i} className={e.level}><time>{clock(e.t)}</time>{e.msg}</li>
@@ -243,7 +245,7 @@ function Pantry({ s }: { s: SimState }) {
         const short = n > have;
         return (
           <div key={i.id} className={`ing ${short ? "short" : ""}`}>
-            <div className="ing-h"><span>{i.name}</span><span>{fmtQ(have, i.unit)}{short && <b> · short {fmtQ(n - have, i.unit)}</b>}</span></div>
+            <div className="ing-h"><span>{i.name}</span><span>{fmtQ(have, i.unit)}{short && <b>, short {fmtQ(n - have, i.unit)}</b>}</span></div>
             <div className="ing-bar">
               <i style={{ width: `${(100 * have) / max}%` }} />
               {n > 0 && <em style={{ left: `${Math.min(100, (100 * n) / max)}%` }} title={`queued orders need ${fmtQ(n, i.unit)}`} />}
@@ -252,8 +254,8 @@ function Pantry({ s }: { s: SimState }) {
         );
       })}
       <div className="deliveries">
-        {next.length ? next.map((e, k) => e.kind === "delivery" && <div key={k}>🚚 {e.label} · {clock(e.at)}</div>) : <div className="muted">No more deliveries today</div>}
-        <div className="muted small">Tick = demand from orders not yet mixed</div>
+        {next.length ? next.map((e, k) => e.kind === "delivery" && <div key={k}><span>{e.label}</span><span>{clock(e.at)}</span></div>) : <div className="muted">No more deliveries today</div>}
+        <div className="muted small">The tick on each bar is what queued orders still need.</div>
       </div>
     </div>
   );

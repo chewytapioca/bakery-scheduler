@@ -4,8 +4,8 @@ import {
 } from "@/lib/engine";
 
 // Validated categorical palettes (see dataviz validator): policies and resource states.
-const POLICY_COLOR: Record<PolicyId, string> = { fifo: "#7b6cc4", edf: "#d98a2b", smart: "#d6457a" };
-const STATE = { busy: "#1f9478", heat: "#d98a2b", stuck: "#c2456a", idle: "#ddd3cf" };
+const POLICY_COLOR: Record<PolicyId, string> = { fifo: "#3f74b8", edf: "#c98a2a", smart: "#c24f63" };
+const STATE = { busy: "#3f8a5a", heat: "#c98a2a", stuck: "#c24f63", idle: "#e8dcc6" };
 
 function Tip({ tip }: { tip: { x: number; y: number; html: React.ReactNode } | null }) {
   return tip ? <div className="tip" style={{ left: tip.x + 12, top: tip.y + 12 }}>{tip.html}</div> : null;
@@ -58,8 +58,8 @@ function LineChart({ s }: { s: SimState }) {
   const x = (t: number) => L + (t / maxT) * (W - L - 24);
   const y = (v: number) => T + (1 - v / maxY) * (H - T - B);
   const series = [
-    { k: "In production", f: (d: (typeof data)[0]) => d.wip, col: "#1f9478" },
-    { k: "Waiting to start", f: (d: (typeof data)[0]) => d.queue, col: "#d98a2b" },
+    { k: "In production", f: (d: (typeof data)[0]) => d.wip, col: "#3f8a5a" },
+    { k: "Waiting to start", f: (d: (typeof data)[0]) => d.queue, col: "#c98a2a" },
   ];
   const d = hi != null ? data[hi] : null;
   return (
@@ -73,14 +73,14 @@ function LineChart({ s }: { s: SimState }) {
           let best = 0; data.forEach((p, i) => { if (Math.abs(p.t - t) < Math.abs(data[best].t - t)) best = i; });
           setHi(best);
         }} onMouseLeave={() => setHi(null)}>
-        {[0, 0.5, 1].map((f) => <g key={f}><line x1={L} x2={W - 24} y1={y(maxY * f)} y2={y(maxY * f)} stroke="#f0e2dc" /><text x={L - 6} y={y(maxY * f) + 4} textAnchor="end" className="tick">{Math.round(maxY * f)}</text></g>)}
+        {[0, 0.5, 1].map((f) => <g key={f}><line x1={L} x2={W - 24} y1={y(maxY * f)} y2={y(maxY * f)} stroke="#efe1c9" /><text x={L - 6} y={y(maxY * f) + 4} textAnchor="end" className="tick">{Math.round(maxY * f)}</text></g>)}
         {[0, 120, 240, 360, 480, 600].filter((t) => t <= maxT).map((t) => <text key={t} x={x(t)} y={H - 6} textAnchor="middle" className="tick">{clock(t)}</text>)}
         {series.map((sr) => (
           <polyline key={sr.k} fill="none" stroke={sr.col} strokeWidth={2} strokeLinejoin="round" points={data.map((p) => `${x(p.t)},${y(sr.f(p))}`).join(" ")} />
         ))}
         {d && <>
-          <line x1={x(d.t)} x2={x(d.t)} y1={T} y2={H - B} stroke="#8c6b5d" strokeDasharray="3 3" />
-          {series.map((sr) => <circle key={sr.k} cx={x(d.t)} cy={y(sr.f(d))} r={4} fill={sr.col} stroke="#fffaf6" strokeWidth={2} />)}
+          <line x1={x(d.t)} x2={x(d.t)} y1={T} y2={H - B} stroke="#8a5a33" strokeDasharray="3 3" />
+          {series.map((sr) => <circle key={sr.k} cx={x(d.t)} cy={y(sr.f(d))} r={4} fill={sr.col} stroke="#fffaf0" strokeWidth={2} />)}
         </>}
       </svg>
       {d && <div className="tip static"><b>{clock(d.t)}</b> · {d.wip} in production · {d.queue} waiting · {d.done} orders on time · ${d.waste.toFixed(2)} wasted</div>}
@@ -93,7 +93,7 @@ function Waste({ s }: { s: SimState }) {
   for (const w of s.waste) { byReason[w.reason] ??= { cost: 0, n: 0 }; byReason[w.reason].cost += w.cost; byReason[w.reason].n++; }
   const ing = Object.entries(s.c.wasteByIngredient).filter(([, q]) => q! > 0);
   const names: Record<string, string> = { overproof: "Over-proofed dough", breakdown: "Ruined in broken oven", cancelled: "Cancelled orders", spoiled: "Spilled / spoiled stock" };
-  if (!s.waste.length) return <p className="muted">Nothing wasted yet. 🎉</p>;
+  if (!s.waste.length) return <p className="note">Nothing wasted yet.</p>;
   return (
     <div className="waste">
       <table className="mini">
@@ -139,7 +139,7 @@ function Compare({ results, title }: { results: Summary[]; title: string }) {
                   <div key={r.policy} className="hbar" title={`${POLICIES.find((p) => p.id === r.policy)!.name}: ${m.fmt(v)}`}>
                     <span className="hbar-l">{POLICIES.find((p) => p.id === r.policy)!.name}</span>
                     <span className="hbar-t"><i style={{ width: `${Math.max(1.5, (100 * v) / max)}%`, background: POLICY_COLOR[r.policy] }} /></span>
-                    <span className={`hbar-v ${v === best ? "best" : ""}`}>{m.fmt(v)}{v === best ? " ★" : ""}</span>
+                    <span className={`hbar-v ${v === best ? "best" : ""}`}>{m.fmt(v)}</span>
                   </div>
                 );
               })}
@@ -173,21 +173,21 @@ export function Metrics({ s, scenario, api }: { s: SimState; summary: Summary; s
   return (
     <div className="metrics">
       <div className="grid2">
-        <div className="card">
-          <div className="card-h"><h2>Where the time went</h2><span className="muted small">minutes so far, during opening hours</span></div>
+        <div className="panel">
+          <div className="h-row"><h2 className="h">Time by resource</h2><span className="note">minutes so far, during opening hours</span></div>
           <Utilization s={s} />
         </div>
-        <div className="card">
-          <div className="card-h"><h2>Work in progress</h2><span className="muted small">lots, sampled every 10 min</span></div>
+        <div className="panel">
+          <div className="h-row"><h2 className="h">Work in progress</h2><span className="note">lots, sampled every 10 min</span></div>
           <LineChart s={s} />
-          <div className="card-h" style={{ marginTop: 14 }}><h2>Waste</h2></div>
+          <h2 className="h" style={{ marginTop: 18 }}>Waste</h2>
           <Waste s={s} />
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-h">
-          <h2>Scheduling policy showdown</h2>
+      <div className="panel">
+        <div className="h-row">
+          <h2 className="h">Policy comparison</h2>
           <div className="row">
             <button className="btn" onClick={() => {
               setMsg("Simulating 30 days…");
@@ -196,15 +196,15 @@ export function Metrics({ s, scenario, api }: { s: SimState; summary: Summary; s
             {api && <button className="btn primary" onClick={async () => {
               setMsg("Saving…");
               const r = await fetch("/api/compare", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ seed: scenario.seed, save: true }) }).then((r) => r.json());
-              setMsg(r.results?.[0]?.id ? "Saved 3 runs to PostgreSQL" : "No DATABASE_URL – runs not persisted"); loadRuns();
+              setMsg(r.results?.[0]?.id ? "Saved 3 runs to PostgreSQL." : "No DATABASE_URL set, so nothing was saved."); loadRuns();
             }}>Run on server &amp; save</button>}
-            <span className="muted small">{msg}</span>
+            <span className="note">{msg}</span>
           </div>
         </div>
-        <p className="muted">Same orders, same disruptions-free day, three different decision rules. The engine, constraints and resources are identical; only the dispatching differs.</p>
+        <p className="note">The same day of orders, with no disruptions, run under each policy. Ovens, bakers and constraints are identical; only the decisions differ.</p>
         <div className="grid2">
           {today && <Compare results={today} title={`Today (day #${scenario.seed}), full day`} />}
-          {bench ? <Compare results={bench} title="Average over 30 random days" /> : <div className="placeholder muted">Run the 30-day benchmark to see if the result holds beyond one day.</div>}
+          {bench ? <Compare results={bench} title="Average over 30 random days" /> : <div className="placeholder note">Run the 30-day benchmark to see if the result holds beyond one day.</div>}
         </div>
         <details className="algo">
           <summary>How the policies decide</summary>
@@ -217,8 +217,8 @@ export function Metrics({ s, scenario, api }: { s: SimState; summary: Summary; s
       </div>
 
       {api && runs.length > 0 && (
-        <div className="card">
-          <div className="card-h"><h2>Saved runs</h2><span className="muted small">from PostgreSQL · sim_runs</span></div>
+        <div className="panel">
+          <div className="h-row"><h2 className="h">Saved runs</h2><span className="note">from PostgreSQL · sim_runs</span></div>
           <div className="table-wrap">
             <table className="orders">
               <thead><tr><th>ID</th><th>When</th><th>Policy</th><th>Day #</th><th>On time</th><th>Avg late</th><th>Items/hr</th><th>Oven util</th><th>Waste</th></tr></thead>
@@ -234,4 +234,3 @@ export function Metrics({ s, scenario, api }: { s: SimState; summary: Summary; s
     </div>
   );
 }
-

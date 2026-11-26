@@ -1,3 +1,6 @@
+import "@fontsource/zen-maru-gothic/latin-500.css";
+import "@fontsource/zen-maru-gothic/latin-700.css";
+import "@fontsource/mochiy-pop-one/latin-400.css";
 import "./globals.css";
 import type { Metadata } from "next";
 

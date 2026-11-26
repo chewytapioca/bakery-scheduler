@@ -1,6 +1,9 @@
 // Standalone single-file build (no server): sprites inlined, PostgreSQL features hidden.
 import { createRoot } from "react-dom/client";
 import BakeryApp from "@/components/BakeryApp";
+import "@fontsource/zen-maru-gothic/latin-500.css";
+import "@fontsource/zen-maru-gothic/latin-700.css";
+import "@fontsource/mochiy-pop-one/latin-400.css";
 import "@/app/globals.css";
 import bunny from "@/public/sprites/bunny.webp"; import bear from "@/public/sprites/bear.webp"; import cat from "@/public/sprites/cat.webp";
 import chick from "@/public/sprites/chick.webp"; import polar from "@/public/sprites/polar.webp"; import scene from "@/public/sprites/scene.webp";

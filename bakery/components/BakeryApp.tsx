@@ -76,7 +76,7 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
       const r = RECIPES[Math.floor(Math.random() * RECIPES.length)];
       const qty = r.perTray * (1 + Math.floor(Math.random() * 3));
       inject(s, { at: s.now, kind: "order", order: {
-        id: `R${s.now}`, customer: "⭐ Rush: Mayor Mallow", product: r.id as ProductId, qty, releaseAt: s.now,
+        id: `R${s.now}`, customer: "Mayor Mallow (rush)", product: r.id as ProductId, qty, releaseAt: s.now,
         deadline: s.now + criticalPath(r) + 25, vip: true } });
     }),
   };
@@ -87,57 +87,59 @@ export default function BakeryApp({ api = false }: { api?: boolean }) {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <img src={sprite("bunny")} alt="" className="brand-bun" />
-          <div>
-            <h1>Bunbun Bakery</h1>
-            <p>Production scheduler &amp; simulator</p>
+      <header className="sign">
+        <img className="sign-char" src={sprite("bunny")} alt="" />
+        <div className="sign-center">
+          <div className="sign-goods" aria-hidden="true">
+            {["croissant", "cupcake", "melon", "cake", "donut", "baguette"].map((n) => <img key={n} src={sprite(n)} alt="" />)}
           </div>
+          <h1>Bunbun Bakery</h1>
+          <p>Production schedule</p>
         </div>
+        <img className="sign-char flip" src={sprite("bear")} alt="" />
+      </header>
+
+      <div className="toolbar">
         <div className="clock" aria-live="polite">
           <span className="clock-time">{clock(s.now)}</span>
-          <span className="clock-sub">{s.finished ? "closed" : s.now >= s.scenario.dayLength ? "after hours" : "open"}</span>
+          <span className="clock-sub">{s.finished ? "Closed" : s.now >= s.scenario.dayLength ? "After hours" : "Open"}</span>
         </div>
-        <div className="controls">
-          <button className="btn primary" onClick={() => setPlaying((p) => !p)} disabled={s.finished}>
-            {playing ? "❚❚ Pause" : "▶ Play"}
-          </button>
+        <div className="tool-group">
+          <button className="btn primary" onClick={() => setPlaying((p) => !p)} disabled={s.finished}>{playing ? "Pause" : "Play"}</button>
           <button className="btn" onClick={() => { step(s); rerender(); }} disabled={s.finished || playing} title="Advance one minute">+1 min</button>
-          <button className="btn" onClick={() => { for (let i = 0; i < 30 && !s.finished; i++) step(s); rerender(); }} disabled={s.finished || playing}>+30</button>
-          <div className="seg" role="radiogroup" aria-label="Speed">
-            {SPEEDS.map((x) => (
-              <button key={x} role="radio" aria-checked={speed === x} className={speed === x ? "on" : ""} onClick={() => setSpeed(x)}>{x}×</button>
-            ))}
-          </div>
-          <label className="field">
-            <span>Policy</span>
-            <select value={policy} onChange={(e) => { const p = e.target.value as PolicyId; setPolicy(p); setPlaying(false); reset(p); }}>
-              {POLICIES.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </label>
-          <label className="field">
-            <span>Day #</span>
-            <input type="number" min={1} value={seed} onChange={(e) => {
-              const v = Math.max(1, Number(e.target.value) || 1); setSeed(v); setPlaying(false);
-              if (!api) { const sc = makeScenario(v); setScenario(sc); reset(policy, sc); }
-            }} />
-          </label>
-          <button className="btn" onClick={() => { setPlaying(false); reset(); }}>↺ Reset</button>
+          <button className="btn" onClick={() => { for (let i = 0; i < 30 && !s.finished; i++) step(s); rerender(); }} disabled={s.finished || playing}>+30 min</button>
         </div>
-      </header>
+        <div className="seg" role="radiogroup" aria-label="Speed">
+          {SPEEDS.map((x) => (
+            <button key={x} role="radio" aria-checked={speed === x} className={speed === x ? "on" : ""} onClick={() => setSpeed(x)}>{x}×</button>
+          ))}
+        </div>
+        <label className="field">
+          <span>Policy</span>
+          <select value={policy} onChange={(e) => { const p = e.target.value as PolicyId; setPolicy(p); setPlaying(false); reset(p); }}>
+            {POLICIES.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </label>
+        <label className="field">
+          <span>Day</span>
+          <input type="number" min={1} value={seed} onChange={(e) => {
+            const v = Math.max(1, Number(e.target.value) || 1); setSeed(v); setPlaying(false);
+            if (!api) { const sc = makeScenario(v); setScenario(sc); reset(policy, sc); }
+          }} />
+        </label>
+        <button className="btn ghost" onClick={() => { setPlaying(false); reset(); }}>Reset</button>
+        {api && <span className={`src ${source}`}>{source === "postgres" ? "PostgreSQL" : "Built-in data"}</span>}
+      </div>
 
       <section className="hero">
         <div className="scene">
-          <img src={sprite("scene")} alt="Bakery floor" />
-          <div className="scene-tag">{POLICIES.find((p) => p.id === policy)!.blurb}</div>
-          {api && <div className={`src-badge ${source}`}>{source === "postgres" ? "● PostgreSQL" : "○ built-in data"}</div>}
+          <img src={sprite("scene")} alt="The bakery floor" />
         </div>
-        <Kpis summary={summary} s={s} />
+        <Kpis summary={summary} s={s} memo={POLICIES.find((p) => p.id === policy)!.blurb} />
       </section>
 
       <nav className="tabs" role="tablist">
-        {([["floor", "Production floor"], ["schedule", "Schedule & orders"], ["metrics", "Metrics & compare"]] as [Tab, string][]).map(([id, l]) => (
+        {([["floor", "Floor"], ["schedule", "Schedule"], ["metrics", "Metrics"]] as [Tab, string][]).map(([id, l]) => (
           <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => setTab(id)}>{l}</button>
         ))}
       </nav>
